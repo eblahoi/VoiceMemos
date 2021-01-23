@@ -1,0 +1,17 @@
+{
+    "cSpell.ignoreWords": [
+        "allowed",
+        "amr",
+        "boto",
+        "extensions",
+        "flac",
+        "jsonify",
+        "mp",
+        "ogg",
+        "wav",
+        "webm"
+    ],
+    "python.pythonPath": "api/venv/bin/python3",
+    "python.linting.enabled": false,
+    "python.linting.pylintEnabled": true
+}
