@@ -36,7 +36,7 @@ celery.conf.update(app.config)
 voicememo_schema = VoiceMemoSchema()
 voicememos_schema = VoiceMemoSchema(many=True)
 
-with  app.app_context():
+with app.app_context():
     db.create_all()
 
 @app.errorhandler(HTTPException)
@@ -52,7 +52,7 @@ def handle_exception(e):
 
 @app.route('/memos', methods=['GET'])
 def get_memos():
-    all_memos = VoiceMemo.query.all()
+    all_memos = VoiceMemo.query.order_by(VoiceMemo.created_at.desc()).all()
     result = voicememos_schema.dump(all_memos)
     return jsonify(result)
 
@@ -62,7 +62,10 @@ def create_memo():
     file_extension = Path(file.filename).suffix.lower()
     new_memo = VoiceMemo.create(request.form['name'].strip(), file_extension)
 
+    #upload file to S3
     s3_client.upload_fileobj(file.stream, app.config['S3_BUCKET_NAME'], new_memo.file_name)
+
+    #start transcription job
     file_uri = f's3://{app.config["S3_BUCKET_NAME"]}/{new_memo.file_name}'
     transcribe_client.start_transcription_job(
         TranscriptionJobName=f'VoiceMemo_{new_memo.file_guid}',
@@ -79,8 +82,13 @@ def create_memo():
 def delete_memo(id):
     memo = VoiceMemo.query.get_or_404(id)
 
+    #delete recording file
     s3_client.delete_object(Bucket=app.config["S3_BUCKET_NAME"], Key=memo.file_name)
+    #delete transcription job
+    transcribe_client.delete_transcription_job(
+        TranscriptionJobName=f'VoiceMemo_{memo.file_guid}')
 
+    #delete db record
     db.session.delete(memo)
     db.session.commit()
 

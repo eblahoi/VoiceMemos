@@ -1,8 +1,8 @@
+import enum
+from datetime import datetime
+from uuid import uuid4
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from uuid import uuid4
-from datetime import datetime
-import enum
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -15,7 +15,7 @@ class TranscriptionStatus(enum.Enum):
 class VoiceMemo(db.Model):
 
     @classmethod
-    def create(cls,     name, file_ext):
+    def create(cls, name, file_ext):
         return cls(name, datetime.utcnow(), str(uuid4()) + file_ext, 
                         TranscriptionStatus.pending, transcription = None)
 
